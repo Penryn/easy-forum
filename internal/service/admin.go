@@ -12,7 +12,7 @@ func GetAdminReportList() (reports []model.Report, err error) {
 	return reports, err
 }
 
-func ApproveReport(pid int,approval int,uid int) (err error) {
-	err = d.ApproveReport(ctx, pid, approval, uid)
+func ApproveReport(pid int,approval int) (err error) {
+	err = d.ApproveReport(ctx, pid, approval)
 	return err
 }

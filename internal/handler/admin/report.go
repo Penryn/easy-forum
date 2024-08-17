@@ -4,6 +4,7 @@ import (
 	"easy-forum/internal/service"
 	"easy-forum/pkg/utils"
 
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,10 +14,10 @@ type GetReportListData struct {
 
 type GetReportListResponse struct {
 	UserNmae string `json:"username"`
-	Content string `json:"content"`
-	Reason string `json:"reason"`
+	PostID   int    `json:"post_id"`
+	Content  string `json:"content"`
+	Reason   string `json:"reason"`
 }
-
 
 func GetReportList(c *gin.Context) {
 	var data GetReportListData
@@ -27,9 +28,16 @@ func GetReportList(c *gin.Context) {
 
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	user, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200512, "用户不存在")
+		return
+	}
 	// 2.是否是管理员
-	// TODO
+	if user.Type != 2 {
+		utils.JsonErrorResponse(c, 200512, "用户不是管理员")
+		return
+	}
 	// 3.获取未审批的举报列表
 	list, err := service.GetAdminReportList()
 	if err != nil {
@@ -44,7 +52,7 @@ func GetReportList(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200514, "获取帖子内容失败")
 			return
 		}
-		user,err := service.GetUserByID(post.UserID)
+		user, err := service.GetUserByID(post.UserID)
 		if err != nil {
 			utils.JsonErrorResponse(c, 200514, "获取用户信息失败")
 			return
@@ -52,8 +60,9 @@ func GetReportList(c *gin.Context) {
 		// 5.返回帖子内容
 		listResponse = append(listResponse, GetReportListResponse{
 			UserNmae: user.Username,
-			Content: post.Content,
-			Reason: item.Reason,
+			PostID:   post.ID,
+			Content:  post.Content,
+			Reason:   item.Reason,
 		})
 	}
 	utils.JsonSuccess(c, gin.H{
@@ -62,9 +71,9 @@ func GetReportList(c *gin.Context) {
 }
 
 type ApproveReportData struct {
-	PostID int `json:"post_id" binding:"required"`
+	PostID   int `json:"post_id" binding:"required"`
 	Approval int `json:"approval" binding:"required"`
-	UserID int `json:"user_id" binding:"required"`
+	UserID   int `json:"user_id" binding:"required"`
 }
 
 func ApproveReport(c *gin.Context) {
@@ -76,13 +85,28 @@ func ApproveReport(c *gin.Context) {
 
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	user, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200512, "用户不存在")
+		return
+	}
 	// 2.是否是管理员
-	// TODO
+	if user.Type != 2 {
+		utils.JsonErrorResponse(c, 200512, "用户不是管理员")
+		return
+	}
 	// 3.是否是审批过的举报
-	// TODO
+	report, err := service.GetReportByPostID(data.PostID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200514, "举报不存在")
+		return
+	}
+	if report.Status != 0 {
+		utils.JsonErrorResponse(c, 200514, "举报已审批")
+		return
+	}
 	// 4.审批举报
-	err := service.ApproveReport(data.PostID, data.Approval, data.UserID)
+	err = service.ApproveReport(data.PostID, data.Approval)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200515, "审批举报失败")
 		return

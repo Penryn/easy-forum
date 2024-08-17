@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	db:=database.Init()
+	db := database.Init()
 	service.ServiceInit(db)
 	r := gin.Default()
 	router.Init(r)
-	err:=r.Run(":8081")
-	if err!=nil{
+	err := r.Run(":8081")
+	if err != nil {
 		log.Fatal(err)
 	}
 }

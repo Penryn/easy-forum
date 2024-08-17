@@ -49,3 +49,28 @@ func GetPostByID(pid int) (post *model.Post, err error) {
 	post, err = d.GetPostByID(ctx, pid)
 	return post, err
 }
+
+func GetAllPostByID(pid int) (post *model.Post, err error) {
+	post, err = d.GetAllPostByID(ctx, pid)
+	return post, err
+}
+
+func GetReportByPostID(pid int) (report *model.Report, err error) {
+	report, err = d.GetReportByPostID(ctx, pid)
+	return report, err
+}
+
+func DeleteReport(rid int) (err error) {
+	err = d.DeleteReport(ctx, rid)
+	return err
+}
+
+func GetReportByPostIDAndUserID(uid int, pid int) (report *model.Report, err error) {
+	report, err = d.GetReportByPostIDAndUserID(ctx, uid, pid)
+	return report, err
+}
+
+func UpdataReportStatus(pid int, approval int) (err error) {
+	err = d.ApproveReport(ctx, pid, approval)
+	return err
+}

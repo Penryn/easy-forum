@@ -30,3 +30,9 @@ func (d *Dao)GetPostByID(ctx context.Context, postid int) (post *model.Post, err
 	err = d.orm.WithContext(ctx).Where("id = ?", postid).First(post).Error
 	return post, err
 }
+
+func (d *Dao)GetAllPostByID(ctx context.Context, postid int) (post *model.Post, err error) {
+	post = new(model.Post)
+	err = d.orm.WithContext(ctx).Unscoped().Where("id = ?", postid).First(post).Error
+	return post, err
+}

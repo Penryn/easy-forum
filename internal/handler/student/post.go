@@ -22,9 +22,13 @@ func CreatePost(c *gin.Context) {
 
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	_, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200507, "用户不存在")
+		return
+	}
 	// 2.创建帖子
-	err := service.CreatePost(data.UserID, data.Content)
+	err = service.CreatePost(data.UserID, data.Content)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200508, "创建失败")
 		return
@@ -65,13 +69,24 @@ func UpdatePost(c *gin.Context) {
 
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	_, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200507, "用户不存在")
+		return
+	}
 	// 2.帖子是否存在
-	// TODO
+	post, err := service.GetPostByID(data.PostID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200509, "帖子不存在")
+		return
+	}
 	// 3.帖子是否属于用户
-	// TODO
+	if post.UserID != data.UserID {
+		utils.JsonErrorResponse(c, 200510, "无权限")
+		return
+	}
 	// 4.更新帖子
-	err := service.UpdatePost(data.UserID, data.PostID, data.Content)
+	err = service.UpdatePost(data.UserID, data.PostID, data.Content)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200510, "更新失败")
 		return
@@ -93,13 +108,24 @@ func DeletePost(c *gin.Context) {
 	}
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	user, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200507, "用户不存在")
+		return
+	}
 	// 2.帖子是否存在
-	// TODO
+	post, err := service.GetPostByID(data.PostID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200509, "帖子不存在")
+		return
+	}
 	// 3.帖子是否属于用户
-	// TODO
-	// 4.删除帖子
-	err := service.DeletePost(data.UserID, data.PostID)
+	if user.ID != post.UserID {
+		utils.JsonErrorResponse(c, 200510, "无权限")
+		return
+	}
+	// 4.删除帖子和更新举报记录
+	err = service.UpdataReportStatus(data.PostID, 1)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200511, "删除失败")
 		return
@@ -108,9 +134,9 @@ func DeletePost(c *gin.Context) {
 }
 
 type ReportPostData struct {
-	UserID  int    `json:"user_id"`
-	PostID  int    `json:"post_id"`
-	Reason  string `json:"reason"`
+	UserID int    `json:"user_id"`
+	PostID int    `json:"post_id"`
+	Reason string `json:"reason"`
 }
 
 func ReportPost(c *gin.Context) {
@@ -122,13 +148,25 @@ func ReportPost(c *gin.Context) {
 
 	// 业务逻辑
 	// 1.用户是否存在
-	// TODO
+	user, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200507, "用户不存在")
+		return
+	}
 	// 2.帖子是否存在
-	// TODO
+	post, err := service.GetPostByID(data.PostID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200509, "帖子不存在")
+		return
+	}
 	// 3.是否重复举报
-	// TODO
+	_, err = service.GetReportByPostIDAndUserID(user.ID, post.ID)
+	if err == nil {
+		utils.JsonErrorResponse(c, 200512, "重复举报")
+		return
+	}
 	// 4.举报帖子
-	err := service.ReportPost(data.UserID, data.PostID, data.Reason)
+	err = service.ReportPost(data.UserID, data.PostID, data.Reason)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200512, "举报失败")
 		return
@@ -141,10 +179,10 @@ type GetReportListData struct {
 }
 
 type GetReportListResponse struct {
-	PostID int `json:"post_id"`
+	PostID  int    `json:"post_id"`
 	Content string `json:"content"`
-	Reason string `json:"reason"`
-	Status int `json:"status"`
+	Reason  string `json:"reason"`
+	Status  int    `json:"status"`
 }
 
 func GetReportList(c *gin.Context) {
@@ -153,10 +191,15 @@ func GetReportList(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200501, "参数错误")
 		return
 	}
+	_, err := service.GetUserByID(data.UserID)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200507, "用户不存在")
+		return
+	}
 	// 业务逻辑
 	// 1.获取举报列表
 	var reportList []model.Report
-	reportList, err := service.GetReportList(data.UserID)
+	reportList, err = service.GetReportList(data.UserID)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200513, "获取失败")
 		return
@@ -164,7 +207,7 @@ func GetReportList(c *gin.Context) {
 	var reportListResponse []GetReportListResponse
 	for _, report := range reportList {
 		// 2.获取帖子内容
-		post, err := service.GetPostByID(report.PostID)
+		post, err := service.GetAllPostByID(report.PostID)
 		if err != nil {
 			utils.JsonErrorResponse(c, 200514, "获取失败")
 			return
@@ -182,4 +225,3 @@ func GetReportList(c *gin.Context) {
 		"report_list": reportListResponse,
 	})
 }
-
