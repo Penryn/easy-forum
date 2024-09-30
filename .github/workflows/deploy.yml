@@ -48,3 +48,4 @@ jobs:
              # 启动或重启服务
              sudo systemctl restart easy-forum.service
 
+
