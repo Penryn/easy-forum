@@ -22,7 +22,7 @@ jobs:
 
       # 编译 Go 项目为二进制文件
       - name: Build project
-        run: go build -o main.go  # 将项目编译为可执行文件
+        run: go build main.go  # 将项目编译为可执行文件
 
       # 上传二进制文件到服务器
       - name: Upload binary to server via scp
